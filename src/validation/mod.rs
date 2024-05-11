@@ -3,7 +3,8 @@ use prost::Message;
 use tonic::{Request, Response, Status};
 
 use crate::proto::validationsvc::{
-    validation_server::Validation, GetVerificationKeyResponse, SignTicketRequest, SignTicketResponse,
+    validation_server::Validation, GetVerificationKeyResponse, SignTicketRequest,
+    SignTicketResponse, SignedTicket,
 };
 
 pub struct ValidationApp {
@@ -18,7 +19,9 @@ impl Validation for ValidationApp {
     ) -> Result<Response<SignTicketResponse>, Status> {
         let ticket = request.into_inner().ticket.unwrap().encode_to_vec();
         let signature = self.signing_key.sign(&ticket).to_vec();
-        let response = SignTicketResponse { ticket, signature };
+        let response = SignTicketResponse {
+            ticket: Some(SignedTicket { ticket, signature }),
+        };
 
         Ok(Response::new(response))
     }
