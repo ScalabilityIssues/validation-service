@@ -2,7 +2,6 @@ use crate::validation::ValidationApp;
 use crate::proto::validationsvc::validation_server::ValidationServer;
 use ed25519::pkcs8::DecodePrivateKey;
 use ed25519_dalek::SigningKey;
-use read_secret::read_file;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tokio::signal::unix::{signal, SignalKind};
@@ -21,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let opt = envy::from_env::<config::Options>()?;
     let keys = envy::from_env::<config::Keys>()?;
-    let signing_key = SigningKey::from_pkcs8_pem(&read_file(&keys.signing_key).unwrap()).unwrap();
+    let signing_key = SigningKey::read_pkcs8_pem_file(&keys.signing_key)?;
 
     // bind server socket
     let addr = SocketAddr::new(opt.ip, opt.port);
