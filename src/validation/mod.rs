@@ -17,7 +17,11 @@ impl Validation for ValidationApp {
         &self,
         request: Request<SignTicketRequest>,
     ) -> Result<Response<SignTicketResponse>, Status> {
-        let ticket = request.into_inner().ticket.unwrap().encode_to_vec();
+        let ticket = request
+            .into_inner()
+            .ticket
+            .unwrap_or_default()
+            .encode_to_vec();
         let signature = self.signing_key.sign(&ticket).to_vec();
         let response = SignTicketResponse {
             ticket: Some(SignedTicket { ticket, signature }),
@@ -41,5 +45,3 @@ impl ValidationApp {
         Self { signing_key }
     }
 }
-
-// TODO: change also project name to validation service
