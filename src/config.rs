@@ -10,7 +10,7 @@ fn default_port() -> u16 {
 }
 
 fn default_path_signing_key() -> String {
-    "sign_key.env".to_string()
+    "sign.pem".to_string()
 }
 
 #[derive(Deserialize, Debug)]
