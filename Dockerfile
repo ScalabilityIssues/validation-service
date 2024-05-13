@@ -23,7 +23,6 @@ RUN cargo build --release --locked
 FROM scratch AS runtime
 LABEL org.opencontainers.image.source="https://github.com/ScalabilityIssues/validation-service"
 COPY --from=builder /app/target/release/validationsvc /app/validationsvc
-USER 65534:65534
 ENV RUST_LOG=info
 EXPOSE 50051
 ENTRYPOINT [ "/app/validationsvc" ]
