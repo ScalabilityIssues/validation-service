@@ -1,9 +1,12 @@
+mod qr;
+
 use ed25519_dalek::{Signer, SigningKey};
 use prost::Message;
 use tonic::{Request, Response, Status};
 
 use crate::proto::validationsvc::{
-    validation_server::Validation, GetVerificationKeyResponse, SignTicketRequest, SignedTicket,
+    validation_server::Validation, GetVerificationKeyResponse, SignTicketRequest,
+    SignTicketResponse, SignedTicket,
 };
 
 pub struct ValidationApp {
@@ -15,16 +18,22 @@ impl Validation for ValidationApp {
     async fn sign_ticket(
         &self,
         request: Request<SignTicketRequest>,
-    ) -> Result<Response<SignedTicket>, Status> {
-        let ticket = request
-            .into_inner()
-            .ticket
-            .unwrap_or_default()
-            .encode_to_vec();
-        let signature = self.signing_key.sign(&ticket).to_vec();
-        let response = SignedTicket { ticket, signature };
+    ) -> Result<Response<SignTicketResponse>, Status> {
+        let SignTicketRequest {
+            ticket: Some(ticket),
+        } = request.into_inner()
+        else {
+            return Err(Status::invalid_argument("Ticket is required"));
+        };
+        let ticket = ticket.encode_to_vec();
 
-        Ok(Response::new(response))
+        let signature = self.signing_key.sign(&ticket).to_vec();
+
+        let signed_ticket = SignedTicket { ticket, signature };
+
+        let qr = qr::make_qr_code(signed_ticket)?;
+
+        Ok(Response::new(SignTicketResponse { qr }))
     }
 
     async fn get_verification_keys(
