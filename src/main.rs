@@ -1,5 +1,5 @@
-use crate::validation::ValidationApp;
 use crate::proto::validationsvc::validation_server::ValidationServer;
+use crate::validation::ValidationApp;
 use ed25519::pkcs8::DecodePrivateKey;
 use ed25519_dalek::SigningKey;
 use std::net::SocketAddr;
@@ -10,18 +10,25 @@ use tonic::transport::Server;
 use tower_http::trace;
 use tracing::Level;
 
-mod validation;
 mod config;
 mod proto;
 mod qr;
+mod validation;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
     let opt = envy::from_env::<config::Options>()?;
-    let keys = envy::from_env::<config::Keys>()?;
-    let signing_key = SigningKey::read_pkcs8_pem_file(&keys.signing_key)?;
+
+    // read or generate signing key
+    let signing_key = if opt.generate_signing_key {
+        tracing::warn!("generating temporary signing key");
+        SigningKey::generate(&mut rand::rngs::OsRng)
+    } else {
+        tracing::info!("reading signing key from {}", opt.signing_key_file);
+        SigningKey::read_pkcs8_pem_file(&opt.signing_key_file)?
+    };
 
     // bind server socket
     let addr = SocketAddr::new(opt.ip, opt.port);
