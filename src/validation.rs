@@ -1,5 +1,3 @@
-mod qr;
-
 use ed25519_dalek::{Signer, SigningKey};
 use prost::Message;
 use tonic::{Request, Response, Status};
@@ -8,6 +6,7 @@ use crate::proto::validationsvc::{
     validation_server::Validation, GetVerificationKeyResponse, SignTicketRequest,
     SignTicketResponse, SignedTicket,
 };
+use crate::qr;
 
 pub struct ValidationApp {
     signing_key: SigningKey,

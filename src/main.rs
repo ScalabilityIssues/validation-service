@@ -13,6 +13,7 @@ use tracing::Level;
 mod validation;
 mod config;
 mod proto;
+mod qr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
