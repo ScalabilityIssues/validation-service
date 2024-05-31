@@ -1,5 +1,6 @@
 use std::io::Cursor;
 
+use base64::Engine;
 use image::Luma;
 use prost::Message;
 use qrcode::QrCode;
@@ -8,7 +9,10 @@ use tonic::Status;
 use crate::proto::validationsvc::SignedTicket;
 
 pub fn make_qr_code(signed_ticket: SignedTicket) -> Result<Vec<u8>, QrError> {
-    let qr = QrCode::new(signed_ticket.encode_to_vec())?;
+    let data = signed_ticket.encode_to_vec();
+    let data = base64::engine::general_purpose::STANDARD.encode(data);
+
+    let qr = QrCode::new(data)?;
 
     let qr = qr.render::<Luma<u8>>().module_dimensions(1, 1).build();
 
