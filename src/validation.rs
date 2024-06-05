@@ -2,10 +2,12 @@ use ed25519_dalek::{Signer, SigningKey};
 use prost::Message;
 use tonic::{Request, Response, Status};
 
+use crate::proto::ticketsrvc::Ticket;
 use crate::proto::validationsvc::{
     validation_server::Validation, GetVerificationKeyResponse, SignTicketRequest,
     SignTicketResponse, SignedTicket,
 };
+use crate::proto::validationsvc::{FlightDetails, TicketClaims};
 use crate::qr;
 
 pub struct ValidationApp {
@@ -19,12 +21,29 @@ impl Validation for ValidationApp {
         request: Request<SignTicketRequest>,
     ) -> Result<Response<SignTicketResponse>, Status> {
         let SignTicketRequest {
-            ticket: Some(ticket),
+            ticket:
+                Some(Ticket {
+                    id,
+                    flight_id,
+                    passenger,
+                    reservation_datetime,
+                    ..
+                }),
         } = request.into_inner()
         else {
             return Err(Status::invalid_argument("Ticket is required"));
         };
-        let ticket = ticket.encode_to_vec();
+
+        let ticket = TicketClaims {
+            ticket_id: id,
+            flight_details: Some(FlightDetails {
+                id: flight_id,
+                ..Default::default() // TODO: fill in flight details
+            }),
+            passenger_details: passenger,
+            ticket_created_at: reservation_datetime,
+        }
+        .encode_to_vec();
 
         let signature = self.signing_key.sign(&ticket).to_vec();
 
